@@ -1,0 +1,89 @@
+---
+title: "Build and release"
+description: "Build the Windows installer, choose how installs connect to the database, and publish updates."
+icon: "package"
+keywords: ["build", "installer", "release", "electron-builder", "updates", "code signing", "easyprint_app", "migrations"]
+---
+
+## Build the installer
+
+Set the optional build-time values in the environment or `.env.local`, then run `npm run dist`:
+
+```powershell
+$env:THINGIVERSE_TOKEN = "..."
+$env:EASYPRINT_UPDATE_URL = "https://updates.example.com/easyprint/"
+$env:EASYPRINT_BUILTIN_DATABASE_URL = "postgresql://easyprint_app:...@.../neondb?sslmode=require"
+$env:EASYPRINT_BUILTIN_AUTH_URL = "https://..."
+
+npm run dist
+```
+
+`npm run dist` runs, in order: `fetch:slicer`, the icon script, `build:electron` (esbuild bundles for main, preload, bridge and slicer, with build-time constants), `build:next` (Next.js standalone output, with `.env*` files and sources removed) and `electron-builder --win --x64`. An after-pack step copies the server's `node_modules` and fails the build if anything required is missing.
+
+Check the build log for:
+
+- `Thingiverse app token: built in` or `NOT SET`
+- `Database connection: built in (login easyprint_app)` or `NOT built in`
+
+The output in `release/` is `EasyPrint3D-Setup.exe` (about 280 MB, mostly OrcaSlicer), its `.blockmap`, `latest.yml` when an update URL is set, and `win-unpacked/`.
+
+## Built-in or entered connection
+
+| | Built in (`EASYPRINT_BUILTIN_*` set) | Entered during setup |
+| --- | --- | --- |
+| Setup | The online services step is skipped | The administrator pastes the database and Auth URLs |
+| Login | The restricted `easyprint_app` login, which can be extracted from the program | Whatever the administrator enters, encrypted with DPAPI |
+| Migrations | Not run by the app; you run them before release | Run automatically at start |
+| Override | A connection saved by an administrator always wins | – |
+
+### Create the restricted login
+
+The build refuses the owner login. The repository does not create the restricted role, so create it yourself as the owner. This example grants data access to `public`, read access to `neon_auth."user"` and update access to its `role` column only. Adjust it to your Neon setup and test it before relying on it.
+
+```sql
+CREATE ROLE easyprint_app LOGIN PASSWORD '<strong password>';
+
+GRANT USAGE ON SCHEMA public TO easyprint_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO easyprint_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO easyprint_app;
+
+GRANT USAGE ON SCHEMA neon_auth TO easyprint_app;
+GRANT SELECT ON neon_auth."user" TO easyprint_app;
+GRANT UPDATE (role) ON neon_auth."user" TO easyprint_app;
+```
+
+## Release checklist
+
+<Steps>
+  <Step title="Bump the version">
+    Update `version` in `package.json`.
+  </Step>
+  <Step title="Migrate production">
+    If the schema changed, run `npm run db:migrate` against the production branch with the owner login. This is required when installers use the built-in login.
+  </Step>
+  <Step title="Check">
+    Run `npm run typecheck`, `npm run lint` and `npm test` on Windows with the slicer downloaded.
+  </Step>
+  <Step title="Build">
+    Run `npm run dist` with the build-time variables set.
+  </Step>
+  <Step title="Smoke-test">
+    On a clean Windows virtual machine: install, setup, printer discovery, slicer test, a print, and uninstall with both **Keep my data** and **Remove everything**.
+  </Step>
+  <Step title="Publish">
+    Upload `EasyPrint3D-Setup.exe`, its `.blockmap` and `latest.yml` to `EASYPRINT_UPDATE_URL`.
+  </Step>
+</Steps>
+
+## Updates
+
+EasyPrint uses `electron-updater` with a generic HTTPS feed. Downloads are checked against the SHA-512 in `latest.yml`. An update installs only when an administrator presses **Install and restart** (automatic download is optional). Updating runs the old uninstaller with `--updated`, which never deletes data.
+
+## Code signing
+
+The installer is not yet signed, so SmartScreen warns. Set `CSC_LINK` and `CSC_KEY_PASSWORD` for an OV or EV certificate and set `publisherName` in `electron-builder.config.cjs` so updates also verify the signature.
+
+## Licences
+
+OrcaSlicer (AGPL-3.0) ships unmodified as a separate program with its licence and a source reference; the flattened profiles are derived data under the same licence. The built-in designer models are Apache-2.0 and downloaded on demand. EasyPrint itself is proprietary.

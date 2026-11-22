@@ -1,0 +1,65 @@
+---
+title: "Configuration"
+description: "Environment variables, build-time variables, administrator settings and slicer profiles."
+icon: "sliders-horizontal"
+keywords: ["environment variables", "DATABASE_URL", "build", "settings", "printRules", "slicer profiles", "manifest"]
+---
+
+## App server environment
+
+The Electron main process sets these. In development they come from `.env.local`.
+
+| Variable | Required | Meaning |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | Neon Postgres connection string (pooled) |
+| `NEON_AUTH_BASE_URL` | Yes | Neon Managed Better Auth URL |
+| `NEON_AUTH_COOKIE_SECRET` | Yes | At least 32 characters; generated per install and saved in `secrets.bin` |
+| `ANTHROPIC_API_KEY` | No | Enables Claude designs |
+| `THINGIVERSE_TOKEN` | No | Built in at build time; enables Thingiverse |
+| `EASYPRINT_DATA_DIR` | No | Local data folder (development default `./.data`) |
+| `EASYPRINT_SKIP_MIGRATIONS` | Automatic | `1` when using the built-in shared login |
+| `EASYPRINT_SERVICE_TOKEN`, `EASYPRINT_CAPABILITY_KEY` | Automatic | Random secrets made at each launch |
+| `EASYPRINT_BRIDGE_URL`, `EASYPRINT_SLICER_URL`, `EASYPRINT_BRIDGE_PORT`, `EASYPRINT_SLICER_PORT` | Automatic | Internal service addresses |
+| `EASYPRINT_SLICER_DIR`, `EASYPRINT_PROFILES_DIR`, `EASYPRINT_MIGRATIONS_DIR` | Automatic | Bundled resource paths |
+| `EASYPRINT_PRINTER_HOST` | Automatic | The bridge's starting printer IP |
+| `EASYPRINT_USE_STANDALONE` | Development | `1` runs the built standalone server instead of `next dev` |
+| `EASYPRINT_NODE` | Development | Node binary used to run `next dev` |
+
+## Build-time variables
+
+Read by `scripts/build-electron.mjs` and `electron-builder.config.cjs` from the build environment or `.env.local`.
+
+| Variable | Meaning |
+| --- | --- |
+| `THINGIVERSE_TOKEN` | EasyPrint's Thingiverse app token (use a read-only app), built into the main process |
+| `EASYPRINT_BUILTIN_DATABASE_URL`, `EASYPRINT_BUILTIN_AUTH_URL` | Optional shared connection built in, so installs skip the online services step. Must be the restricted `easyprint_app` login; the build fails on `neondb_owner` or if only one is set |
+| `EASYPRINT_UPDATE_URL` | HTTPS update feed. Without it the updater reports that no update source has been set up |
+| `CSC_LINK`, `CSC_KEY_PASSWORD` | Code-signing certificate (not yet used) |
+
+A connection saved by an administrator always overrides the built-in one.
+
+## Administrator settings
+
+Stored in the `settings` table, one JSON document per key, and validated with defaults in `src/lib/server/settings.ts`. An invalid stored value falls back to the defaults.
+
+| Key | Fields and defaults |
+| --- | --- |
+| `printRules` | `requireApproval` false, `libraryModelsPreApproved` true, `approvalAboveMinutes` 240, `maxSizeMm` 240 × 240 × 240, `allowedMaterials` pla, `allowedQualities` standard, fine and quick, `defaultQuality` standard, `allowUploads` true, `confirmBedClear` true, `bedLevelling` false, `supports` and `brim` ask, `advancedForEveryone` true, `bedType` Textured PEI Plate, `timelapse` false |
+| `slicerOverrides` | `machine`, `process` per quality and `filament` per material: key/value maps |
+| `printer` | `host`, `mainboardId`, `name`, `enableCamera` true |
+| `ai` | `enabled` true, `model` claude-opus-5-5, `localEnabled` true, `preferLocal` false, `localModel` standard, `dailyLimitPerPerson` 20 |
+| `thingiverse` | `enabled` true, `usersCanBrowse` false |
+| `accessibilityDefaults` | Starting preferences for new people |
+| `updates` | `autoDownload` false, `channel` stable |
+
+## Slicer profiles
+
+`slicer/profiles/manifest.json` lists:
+
+| Kind | Entries |
+| --- | --- |
+| Machine | Centauri Carbon, 0.4 mm nozzle, 256 × 256 × 256 mm |
+| Processes | `standard` 0.20 mm (Normal), `fine` 0.12 mm (Fine detail), `quick` 0.24 mm (Quick), `strong` 0.20 mm (Extra strong) |
+| Filaments | `pla`, `pla-plus`, `pla-matte`, `pla-silk`, `petg` |
+
+Regenerate them with `npm run profiles`, which flattens the OrcaSlicer v2.5.1 Elegoo vendor profiles without changing values.

@@ -3,63 +3,84 @@
   "theme": "mint",
   "name": "Easy print 3D",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#1D4ED8",
+    "light": "#8FB0FF",
+    "dark": "#1E40AF"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/logo/easyprint-icon.png",
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Getting Started",
+        "tab": "Guides",
         "pages": [
-          "index",
-          "quickstart"
+          {
+            "group": "Get started",
+            "pages": [
+              "index",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Using EasyPrint",
+            "pages": [
+              "guides/print-a-model",
+              "guides/create-a-model",
+              "guides/settings",
+              "guides/troubleshooting"
+            ]
+          },
+          {
+            "group": "Administration",
+            "pages": [
+              "admin/overview",
+              "admin/safety-rules",
+              "admin/ai-designs",
+              "admin/maintenance"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developers",
+        "groups": [
+          {
+            "group": "How it works",
+            "pages": [
+              "developers/overview",
+              "developers/architecture",
+              "developers/print-pipeline",
+              "developers/data-model",
+              "developers/security"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "developers/configuration",
+              "developers/internal-apis"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "developers/setup",
+              "developers/build-and-release",
+              "developers/testing-and-conventions"
+            ]
+          }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    ]
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:support@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
-    }
+    "links": []
   },
   "contextual": {
     "options": [
       "copy",
       "view",
       "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
+      "claude"
     ]
   },
   "footer": {

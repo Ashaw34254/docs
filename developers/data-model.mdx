@@ -1,0 +1,44 @@
+---
+title: "Data model"
+description: "The database tables in Neon Postgres and the files EasyPrint keeps on the PC."
+icon: "database"
+keywords: ["database", "schema", "tables", "Drizzle", "migrations", "files", "storage"]
+---
+
+Identity lives in the `neon_auth` schema, managed by Neon Auth. EasyPrint only reads it and updates `neon_auth.user.role`. EasyPrint's own tables are in `public`, defined in `src/db/schema.ts`.
+
+| Table | Purpose | Key columns |
+| --- | --- | --- |
+| `app_users` | A person profile, created at first start or by an administrator. | `user_id`, `display_name`, `requires_approval` (null follows the global rule), `can_upload`, `can_use_ai`, `disabled` |
+| `user_preferences` | Accessibility preferences per person. | `theme`, `high_contrast`, `text_size`, `reduce_motion`, `simplified`, `guided_mode`, `spoken_instructions`, `audio_notifications`, `notify_when_finished`, `notify_on_problem` |
+| `categories` | Library categories. | `id` (slug), `name`, `icon`, `sort_order` |
+| `models` | Every printable model. | `kind` (`library`, `creation`, `upload`, `ai`), `status` (`draft`, `pending`, `published`, `rejected`), `owner_id`, `file_hash`, `file_format`, `preview_hash`, `bbox`, `size_options`, `colour_ids`, `scene`, `prompt`, `source`, `source_url`, `licence`, `author`, `deleted_at` |
+| `favourites` | Person and model pairs. | `user_id`, `model_id` |
+| `filaments` | Spools: a colour of a material profile. | `name`, `hex`, `material_id` (a key in the slicer manifest), `available`, `loaded` |
+| `print_jobs` | One print attempt. | `status`, colour, material, quality, size and scale, `supports`, `brim`, slicer output (`gcode_hash`, `estimated_seconds`, `filament_grams`, `layer_count`), printer progress, `error_code`, `error_message`, approval and timestamps |
+| `settings` | Administrator configuration, one JSON document per key. | `key`, `value`, `updated_by` |
+| `audit_log` | The activity log. | `at`, `actor_id`, `action`, `target`, `details`, `level` |
+| `ai_usage` | Daily AI request count per person. | `user_id`, `day`, `requests` |
+
+## Migrations
+
+Migrations live in `drizzle/`: `0000_init`, `0001_seed_reference_data` (10 categories and 6 PLA colours) and `0002_print_helpers`. Migrations only add or alter, so upgrades keep every person, model and print. The app applies them at start-up unless it uses the built-in restricted login.
+
+## Files on the PC
+
+The data folder (`%APPDATA%\EasyPrint 3D\data` when installed, `./.data` in development):
+
+| Path | Contents |
+| --- | --- |
+| `models/` | Mesh files (STL or 3MF), named by SHA-256 and split into folders by the first two characters |
+| `previews/` | PNG previews, named the same way |
+| `gcode/` | Sliced G-code, named the same way |
+| `person.json` | Which `app_users` row is this computer's person |
+| `ai-models/` | Downloaded files for the built-in designer |
+| `selftest/` | The cube used by the slicer test |
+
+`%APPDATA%\EasyPrint 3D\` also holds `secrets.bin` and `logs/` (rotated at 5 MB, credentials redacted).
+
+<Warning>
+  Files are local but their metadata is in the cloud, so one installation owns its files. If several PCs share one database, each sees rows whose files exist only on the PC that created them. The file store is a single module (`src/lib/server/files.ts`) to swap for object storage if that becomes necessary.
+</Warning>

@@ -1,0 +1,99 @@
+---
+title: "Development setup"
+description: "Set up a development machine, provision Neon, configure the environment and run EasyPrint."
+icon: "terminal"
+keywords: ["development", "setup", "Neon", "env", "migrations", "npm run dev", "ports"]
+---
+
+## Prerequisites
+
+| Requirement | Notes |
+| --- | --- |
+| Windows 10 or 11, x64 | Needed to run the app end to end: the bundled slicer is `orca-slicer.exe`, secrets use DPAPI and the installer is NSIS. Typecheck, lint and most unit tests also run on macOS and Linux. |
+| Node.js 22 or newer, and npm | The build targets Node 22. |
+| Git | |
+| A Neon account | Postgres and Managed Better Auth. |
+| Anthropic API key (optional) | For Claude designs. |
+| Thingiverse app token (optional) | From thingiverse.com/apps; use a read-only app. |
+| Elegoo Centauri Carbon on the LAN (optional) | Everything except printing works without one. |
+
+<Steps>
+  <Step title="Get the code and the slicer">
+    ```powershell
+    git clone https://github.com/ashaw34254/open3d.git
+    cd open3d
+    npm install
+    npm run fetch:slicer
+    ```
+
+    `fetch:slicer` downloads the pinned OrcaSlicer 2.5.1 portable build, checks its SHA-256 and extracts it to `vendor/orcaslicer`, which is not committed.
+  </Step>
+  <Step title="Provision Neon">
+    Create a Neon project with one branch per environment (for example `main` for production and `dev` for development). Turn on **Neon Auth** for the branch and note its **Auth URL**. Copy the **pooled** connection string for the owner role.
+  </Step>
+  <Step title="Configure .env.local">
+    ```powershell
+    copy .env.example .env.local
+    ```
+
+    Set `DATABASE_URL` and `NEON_AUTH_BASE_URL` from your `dev` branch, and `NEON_AUTH_COOKIE_SECRET` to at least 32 random characters:
+
+    ```powershell
+    node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+    ```
+
+    `ANTHROPIC_API_KEY`, `THINGIVERSE_TOKEN` and `EASYPRINT_DATA_DIR` are optional. See [Configuration](/developers/configuration).
+  </Step>
+  <Step title="Migrate the database">
+    ```powershell
+    npm run db:migrate
+    ```
+  </Step>
+  <Step title="Run">
+    ```powershell
+    npm run dev
+    ```
+
+    This builds `dist-electron/` and launches Electron, which runs `next dev` on port 3210. Extra flags pass through to Electron, for example `npm run dev -- --remote-debugging-port=9222`. On first launch, go through setup: create the first administrator, pick the printer (or skip) and run the slicer test.
+  </Step>
+</Steps>
+
+## Development tips
+
+- Development data lives in `./.data`. Delete `./.data/person.json` to be asked for a name again.
+- `npm run dev:web` runs only `next dev` on `127.0.0.1:3210`, without the bridge, slicer or `window.easyprint`. It is useful for UI work; printer and slicing calls fail.
+- `EASYPRINT_USE_STANDALONE=1` makes Electron run the built standalone server (run `npm run build:next` first).
+- `scripts/dev.mjs` clears `ELECTRON_RUN_AS_NODE`, which VS Code terminals set.
+
+## Ports
+
+| Port | Service |
+| --- | --- |
+| 3210 | App server |
+| 4317 | Printer bridge |
+| 4318 | Slicing service |
+| 4399 | Slicer integration test |
+
+If start-up says a port is in use, a previous instance is probably still running.
+
+## Changing the database schema
+
+<Steps>
+  <Step title="Edit the schema">
+    Change `src/db/schema.ts`.
+  </Step>
+  <Step title="Generate a migration">
+    Run `npm run db:generate`. It only touches the `public` schema, never `neon_auth`.
+  </Step>
+  <Step title="Review and apply">
+    Check the SQL only adds or alters, so upgrades never lose data. Run `npm run db:migrate` and commit the schema and the migration together.
+  </Step>
+</Steps>
+
+## Working with a printer
+
+Put the Centauri Carbon on the same subnet as your PC. Discovery is a UDP broadcast to port 3000; the bridge then uses WebSocket and HTTP on port 3030 and the MJPEG camera on 3031. Close Elegoo's apps and OrcaSlicer's device tab while testing: the printer allows few connections and one camera viewer. After changing the bridge, re-check discovery, upload, start, pause and resume, stop, completion detection and the camera.
+
+## Built-in designer
+
+In **App settings**, download the Standard (2.7 GB) or Large (5.7 GB) model into the data folder's `ai-models/`. Files are pinned to a Hugging Face revision and checked against their SHA-256. Packaging ships node-llama-cpp's CPU and Vulkan engines only, not CUDA.

@@ -1,0 +1,34 @@
+---
+title: "AI designs"
+description: "Choose how Describe what I want turns a description into a model: ready-made designs, the built-in designer or Claude."
+icon: "sparkles"
+keywords: ["AI", "describe", "Claude", "Anthropic", "built-in designer", "Qwen", "templates", "daily limit"]
+---
+
+**Describe what I want** turns a few words into a real, printable model made of simple shapes. Configure it in **System**, then **App settings**.
+
+## Three designers
+
+| Designer | Cost | Needs | Notes |
+| --- | --- | --- | --- |
+| **Ready-made designs** | Free | Nothing | About twenty tested designs (keychains, signs, phone stand, plant pots, toys) filled in from the description. Offline and instant. Not counted against the daily limit. |
+| **Built-in designer** | Free | A download | A Qwen3.5 AI model (Apache-2.0) that runs on this PC. **Standard** is 2.7 GB and suits most PCs; **Large** is 5.7 GB, needs 16 GB memory and makes better designs. Works offline once downloaded and uses the graphics card when it can. |
+| **Claude** | Paid to Anthropic | An Anthropic API key | Online. Choose which Claude model to use. |
+
+EasyPrint tries an exact ready-made design first. If none covers the whole description, it uses the built-in designer or Claude (you choose which comes first), and if neither is available, the nearest ready-made design with a note saying what was left out.
+
+## Set it up
+
+<Steps>
+  <Step title="Download the built-in designer (optional)">
+    In **App settings**, under **Describe what I want (AI)**, choose **Standard** or **Large** and press **Download**. The file is checked after download.
+  </Step>
+  <Step title="Add an Anthropic API key (optional)">
+    Add the key during setup, or later in **App settings**.
+  </Step>
+  <Step title="Set the daily limit">
+    Set how many AI designs each person can ask for per day (default 20). Administrators are not limited.
+  </Step>
+</Steps>
+
+You can turn the whole feature off, prefer the built-in designer over Claude, switch the built-in designer off, or turn AI designs off for individual people in **People and accounts**.

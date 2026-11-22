@@ -1,0 +1,48 @@
+---
+title: "Testing and conventions"
+description: "Run the tests and follow the project's coding and accessibility conventions."
+icon: "flask-conical"
+keywords: ["tests", "lint", "typecheck", "conventions", "accessibility", "audit", "zod"]
+---
+
+## Run the checks
+
+```powershell
+npm run typecheck
+npm run lint
+npm test
+```
+
+| Test | Covers |
+| --- | --- |
+| `capability.test.ts` | Capability tokens: minting, expiry, single use, binding |
+| `control.test.ts` | Advanced control validation and limits |
+| `mesh.test.ts` | STL and 3MF parsing, analysis, printability advice |
+| `scene.test.ts` | The shape scene schema and building |
+| `templates.test.ts` | Matching descriptions to ready-made designs |
+| `slicer.integration.test.ts` | The real OrcaSlicer through the compiled service |
+
+<Note>The slicer integration test is skipped unless you have run `npm run build:electron` and `npm run fetch:slicer` on Windows.</Note>
+
+Other scripts: `npm run profiles` regenerates the flattened slicer presets (review the diff), and `npm run icon` regenerates `build/icon.ico`.
+
+## Conventions
+
+- Server-only code imports `server-only`. Code shared between processes lives in `shared/`.
+- Validate every boundary with zod.
+- Return plain-language errors with `HttpError` and `withErrors`. The person reading them may not be technical.
+- Record meaningful actions with `audit()`.
+- Change a job's state only with a conditional update on its expected current status.
+- Never send a printer write without a capability token. Never let administrator overrides touch start or end G-code or printer identity.
+- Read `node_modules/next/dist/docs/` before framework-level changes (Next.js 16).
+- Record significant decisions as a new decision record in `docs/decisions/`.
+
+## Accessibility
+
+EasyPrint is designed for people who need calm, predictable screens. Keep these working when you change the UI:
+
+- large text by default, Guided Mode, simplified screens, reduced motion by default, high contrast, and light, dark or system themes,
+- spoken instructions and audio notifications,
+- focus moving to each step's heading,
+- ARIA radio groups with arrow-key support (`src/components/a11y.ts`),
+- plain-language messages from every API, and no time pressure.

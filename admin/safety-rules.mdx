@@ -1,0 +1,34 @@
+---
+title: "Safety and permission rules"
+description: "Decide which prints need approval, what sizes and materials are allowed, and which checks run before printing."
+icon: "shield-check"
+keywords: ["rules", "approval", "bed clear", "supports", "brim", "materials", "quality", "permissions"]
+---
+
+Open **Printing** and then **Safety and permissions**. Defaults are shown in brackets.
+
+| Rule | What it means |
+| --- | --- |
+| Every print needs approval *(off)* | Turn on to check every print yourself. |
+| Library models are pre-approved *(on)* | Published library models never need approval. |
+| Prints longer than a set time need approval *(240 minutes)* | Long prints wait for you. 0 means no limit. |
+| Ask to confirm the bed is clear *(on)* | The person must tick *the printer bed is empty* before every print. |
+| Automatic bed levelling *(off)* | Runs the printer's levelling before each print, adding a few minutes. |
+| Supports and Brim *(ask)* | **Ask**: EasyPrint recommends and the person can change it. **Auto**: EasyPrint decides. **Never**: not used. |
+| Advanced printer panel for everyone *(on)* | Lets the person open temperatures, movement, fans and files. Administrators can always use it. |
+| Build plate *(Textured PEI)* | Match the plate on your printer: Textured PEI, smooth PEI (High Temp Plate) or Cool Plate. |
+| Timelapse *(off)* | Ask the printer to record a timelapse. |
+| Largest print allowed *(240 × 240 × 240 mm)* | Leaves a margin inside the printer's 256 mm build space. |
+| Materials people may use *(PLA)* | Only these appear when choosing a colour. |
+| Print quality choices *(Normal, Fine detail, Quick)* | And which one is the default. **Extra strong** is also available. |
+| Allow uploads *(on)* | Whether **Upload a model** appears. |
+
+<Tip>Keep **Ask to confirm the bed is clear** on. Printing onto a leftover model is the most common way to damage a print or the printer.</Tip>
+
+## Per-person settings
+
+In **People and accounts** you can make the rules stricter for one person: require approval for all their prints, turn off uploads or AI designs, or pause them.
+
+## Checks EasyPrint always makes
+
+Whatever the rules, EasyPrint only starts a print when the printer is connected and idle, no other print is using it, the print has been prepared and approved, and the chosen size fits.

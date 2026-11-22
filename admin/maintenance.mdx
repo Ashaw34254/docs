@@ -1,0 +1,67 @@
+---
+title: "Updates, data and troubleshooting"
+description: "Update, repair or uninstall EasyPrint, find where data is stored, and fix common problems."
+icon: "wrench"
+keywords: ["update", "uninstall", "repair", "backup", "data", "logs", "troubleshooting", "ports", "camera"]
+---
+
+## Updates
+
+**App settings**, then **Updates**, shows whether an update is available. Only an administrator can download and install it with **Install and restart**. Your data is kept.
+
+If it says *No update source has been set up for this build*, ask whoever supplies EasyPrint for a new installer and run it. It updates in place.
+
+## Repair and uninstall
+
+- **Repair or reinstall**: run the installer again. Data is kept.
+- **Uninstall**: in Windows **Settings**, **Apps**, **Installed apps**, choose **EasyPrint 3D** and **Uninstall**. You are asked:
+  - **Keep my data** (default): removes the program only.
+  - **Remove everything**: also deletes the models, previews, prepared print files, saved connection details and logs on this PC.
+
+<Note>Online data (people, the library list, print history) is never deleted by uninstalling.</Note>
+
+## Where things are stored
+
+| What | Where |
+| --- | --- |
+| Program | `%LOCALAPPDATA%\Programs\EasyPrint 3D`, unless you chose another folder |
+| Model files, previews, prepared prints, built-in AI designer | `%APPDATA%\EasyPrint 3D\data` |
+| Saved connection details (encrypted) | `%APPDATA%\EasyPrint 3D\secrets.bin` |
+| Logs | `%APPDATA%\EasyPrint 3D\logs` |
+| People, library, print history, settings, activity log | The online database |
+
+Back up `%APPDATA%\EasyPrint 3D\data` to keep model files when replacing the PC. The encrypted `secrets.bin` only works for the same Windows user on the same PC.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="EasyPrint could not start because another program is using port 3210, 4317 or 4318">
+    Restart the PC. If it keeps happening, another program uses that port; contact whoever supplies EasyPrint.
+  </Accordion>
+  <Accordion title="Setup says the database could not be reached">
+    Check the internet connection and re-check the connection string.
+  </Accordion>
+  <Accordion title="The printer is not found">
+    Check the printer is on and on the same network. Type its IP address instead of searching. Guest or isolated Wi-Fi networks can stop devices seeing each other.
+  </Accordion>
+  <Accordion title="The printer connects, then drops">
+    The Centauri Carbon allows only a few connections. Close other programs that talk to it, such as Elegoo's app or OrcaSlicer, and try again.
+  </Accordion>
+  <Accordion title="The camera does not show">
+    The printer allows one camera viewer at a time. Close other viewers and check the camera is on in **Printer**.
+  </Accordion>
+  <Accordion title="A print failed while it was being prepared">
+    Look at the **Activity log**. Often the model is broken or too big; try another size or repair the file.
+  </Accordion>
+  <Accordion title="Thingiverse search is unavailable">
+    This copy of EasyPrint was built without a Thingiverse token. Ask whoever supplies EasyPrint.
+  </Accordion>
+  <Accordion title="Describe what I want is missing">
+    It is turned off in **App settings**, or for that person in **People and accounts**.
+  </Accordion>
+  <Accordion title="A different person now uses the PC">
+    In **People and accounts**, use **Forget this computer**, or **Choose for this computer**.
+  </Accordion>
+</AccordionGroup>
+
+When asking for help, include the time it happened and the relevant lines from the **Activity log** or the files in `%APPDATA%\EasyPrint 3D\logs`. Passwords and keys are hidden in the logs automatically.
