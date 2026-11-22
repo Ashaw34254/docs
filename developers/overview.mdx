@@ -1,0 +1,65 @@
+---
+title: "Developer overview"
+description: "What EasyPrint 3D is made of: technology stack, identities and repository layout."
+icon: "code"
+keywords: ["architecture", "stack", "Electron", "Next.js", "Neon", "OrcaSlicer", "repository"]
+---
+
+EasyPrint 3D is an **Electron desktop application for Windows** that lets a person with no 3D printing knowledge print on an **Elegoo Centauri Carbon**. It contains:
+
+- a **Next.js 16** application (UI, server actions, API routes) run as a local server,
+- a **printer bridge** speaking Elegoo's **SDCP v3** protocol over the LAN,
+- a **slicing service** wrapping a bundled, unmodified **OrcaSlicer 2.5.1** command line,
+- cloud services: **Neon Postgres** (data) and **Neon Managed Better Auth** (administrator accounts), plus optional **Anthropic Claude** and **Thingiverse**.
+
+Printing end to end has been tested on a physical Centauri Carbon.
+
+## Identities
+
+| Identity | How it is established | Used for |
+| --- | --- | --- |
+| **Person** (the one who prints) | No sign-in. On first start they type their name; a row in `app_users` is created and its id is saved in `person.json` in the data folder. | Everyday pages: `/home`, `/print`, `/create` and so on |
+| **Administrator** | Neon Auth account (email and password) with `neon_auth.user.role = 'admin'`. The role is re-read from the database on every request. | `/admin`, admin APIs, admin-only IPC |
+
+## Technology stack
+
+| Layer | Technology |
+| --- | --- |
+| Desktop shell | Electron 45 (`utilityProcess` for services), electron-builder (NSIS), electron-updater |
+| UI and server | Next.js 16.4 (App Router, standalone output, `src/proxy.ts` instead of middleware), React 19.3 |
+| 3D | three.js 0.187, React Three Fiber and drei, manifold-3d (watertight meshes), fflate (3MF) |
+| Data | Neon serverless Postgres, Drizzle ORM and drizzle-kit |
+| Auth | `@neon/auth` (Neon Managed Better Auth) |
+| AI | `@anthropic-ai/sdk` (Claude, structured output); `node-llama-cpp` 3.22 (local Qwen3.5 GGUF, CPU or Vulkan) |
+| Validation | zod 4 at every boundary |
+| Build | esbuild, TypeScript 5, ESLint 9 |
+| Tests | `node --test` with native TypeScript |
+
+<Warning>This repository uses Next.js 16, which has breaking changes compared with older versions. Read the guides in `node_modules/next/dist/docs/` before changing framework-level code.</Warning>
+
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `electron/` | `main.ts` (boot, window, session lock-down), `services.ts` (ports, supervisor, environment), `secrets.ts` (safeStorage and built-in connection), `ipc.ts` (with admin tickets), `preload.ts`, `updater.ts`, `logger.ts`, `splash.html` |
+| `bridge/` | `index.ts` (HTTP API, capability checks), `sdcp.ts` (WebSocket client, status model), `discovery.ts` (UDP), `upload.ts` (chunked upload) |
+| `slicer/` | `service.ts` (slicing HTTP service), `profiles/` (flattened Centauri Carbon presets, `manifest.json`, `NOTICE.md`) |
+| `shared/` | Code used by more than one process: capabilities, advanced control validation, mesh parsing and analysis, scene schema, ready-made design templates, printer types, fonts |
+| `src/app/` | Next.js routes: `(app)/` everyday pages, `admin/` administration, `setup/`, `welcome/`, `paused/`, `api/` |
+| `src/lib/server/` | Server-only domain logic |
+| `src/components/` | UI components |
+| `src/db/` | Drizzle schema and client |
+| `drizzle/` | SQL migrations and snapshots |
+| `scripts/` | Build, packaging, slicer download, profile generation, migration, dev launcher, icon |
+| `build/` | Installer resources |
+| `tests/` | Unit and integration tests |
+| `docs/` | Markdown docs and architecture decision records |
+
+<Columns cols={2}>
+  <Card title="Architecture" icon="network" href="/developers/architecture">
+    Processes, ports and start-up.
+  </Card>
+  <Card title="Development setup" icon="terminal" href="/developers/setup">
+    Get a development machine running.
+  </Card>
+</Columns>

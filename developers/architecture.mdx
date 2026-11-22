@@ -1,0 +1,76 @@
+---
+title: "Architecture"
+description: "The four local processes, how they talk to each other, and how EasyPrint starts and stops."
+icon: "network"
+keywords: ["processes", "ports", "Electron", "utilityProcess", "startup", "supervisor", "bridge", "slicer"]
+---
+
+The Electron main process starts and supervises three local services and a sandboxed window. The window only ever talks to the app server; it never reaches the bridge, slicer or printer directly.
+
+```text
+Electron main process: single-instance lock, port check, secrets, supervisor, IPC, updater
+   |
+   +-- BrowserWindow (sandboxed) --> http://localhost:3210
+   |
+   +-- App server (Next.js) 127.0.0.1:3210
+   |      |-- Bearer service token --> Printer bridge 127.0.0.1:4317 --SDCP--> Centauri Carbon
+   |      |                              (WebSocket/HTTP :3030, MJPEG camera :3031)
+   |      |-- Bearer service token --> Slicing service 127.0.0.1:4318 --spawn--> orca-slicer.exe
+   |      +-- TLS --> Neon Postgres, Neon Auth, Anthropic, Thingiverse, Hugging Face
+```
+
+| Piece | Source | Port | Runs as | Health check |
+| --- | --- | --- | --- | --- |
+| Main process | `electron/main.ts` | – | Electron main | – |
+| Window | `BrowserWindow` | loads `http://localhost:3210` | Sandboxed renderer | – |
+| App server | `src/` built to `.next/standalone/server.js` | 3210 | `utilityProcess` (`next dev` child in development) | `GET /api/health`, no auth |
+| Printer bridge | `bridge/` built to `dist-electron/bridge.js` | 4317 | `utilityProcess` | `GET /health`, Bearer |
+| Slicing service | `slicer/service.ts` built to `dist-electron/slicer.js` | 4318 | `utilityProcess`, which spawns `orca-slicer.exe` | `GET /health`, Bearer |
+
+All servers bind to `127.0.0.1`. The window uses the `localhost` origin because Neon Auth trusts `localhost` for sign-in by default. The app server only answers requests whose `Host` is `127.0.0.1:3210` or `localhost:3210`, which blocks DNS rebinding.
+
+## Start-up
+
+<Steps>
+  <Step title="Single instance">
+    A second launch focuses the existing window instead.
+  </Step>
+  <Step title="Lock down the session">
+    Deny all permissions except notifications. Cancel every request that is not to the app origin, `data:`, `blob:`, the splash screen or devtools.
+  </Step>
+  <Step title="Check ports">
+    Show the splash screen and check ports 3210, 4317 and 4318 are free. If not, show a plain-language error and quit.
+  </Step>
+  <Step title="Load secrets">
+    Read `secrets.bin`, then (development only) `.env.local`, then the built-in shared connection if the build has one.
+  </Step>
+  <Step title="Start services">
+    Start the bridge and slicer in parallel and wait up to 15 seconds each for health. Then start the app server with the secrets in its environment and wait up to 60 seconds (180 in development).
+  </Step>
+  <Step title="Open the window">
+    Load `/`, or `/setup` when there is no database connection. Initialise the updater.
+  </Step>
+</Steps>
+
+When the app server starts (`src/instrumentation.ts` and `src/lib/server/startup.ts`), it applies database migrations unless `EASYPRINT_SKIP_MIGRATIONS=1`, tells the bridge which printer IP to use, and starts the job monitor, which also fails jobs interrupted by a previous shutdown.
+
+## Supervision and shutdown
+
+- A service that exits unexpectedly is restarted after 1 s, 2 s, 3 s and so on. After 5 crashes in 2 minutes it is left stopped and logged.
+- Services receive only an allow-list of environment variables, not the user's whole environment.
+- Shutdown stops the app server first, then the bridge and slicer. Each gets a shutdown message and 5 seconds before it is killed.
+
+## Server modules
+
+| Module in `src/lib/server/` | Responsibility |
+| --- | --- |
+| `env.ts` | Required environment, data folder, internal service URLs and tokens |
+| `startup.ts`, `migrate.ts` | Boot: migrations, bridge configuration, job monitor |
+| `auth.ts`, `auth-instance.ts`, `auth-admin.ts` | Neon Auth, administrator and person guards, plain-language JSON errors, first-admin promotion |
+| `person.ts`, `preferences.ts` | The local person file; accessibility preferences |
+| `settings.ts`, `audit.ts` | Typed administrator settings with defaults; activity log |
+| `files.ts`, `models.ts`, `model-store.ts` | Content-addressed file store; models, uploads, scenes, previews |
+| `scene-build.ts`, `design-spec.ts`, `ai-generate.ts`, `local-designer.ts` | Shapes to watertight mesh; AI design orchestration; local AI model |
+| `print-advice.ts`, `slicer.ts`, `slicer-fields.ts` | Supports and brim advice; slicer client; editable slicer fields |
+| `printer.ts`, `jobs.ts`, `job-control.ts`, `job-monitor.ts`, `advanced.ts` | Bridge client; job lifecycle and safety checks; pause and resume intents; following the active print; Advanced panel permission |
+| `thingiverse.ts` | Thingiverse search and download |

@@ -45,7 +45,10 @@
         "groups": [
           {
             "group": "How it works",
-            "pages": []
+            "pages": [
+              "developers/overview",
+              "developers/architecture"
+            ]
           },
           {
             "group": "Reference",
