@@ -63,7 +63,9 @@
           {
             "group": "Development",
             "pages": [
-              "developers/setup"
+              "developers/setup",
+              "developers/build-and-release",
+              "developers/testing-and-conventions"
             ]
           }
         ]
