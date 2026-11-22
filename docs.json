@@ -56,7 +56,8 @@
           {
             "group": "Reference",
             "pages": [
-              "developers/configuration"
+              "developers/configuration",
+              "developers/internal-apis"
             ]
           },
           {

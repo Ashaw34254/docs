@@ -1,0 +1,66 @@
+---
+title: "Internal APIs"
+description: "The app server routes, the printer bridge and slicing service APIs, and the preload API."
+icon: "plug"
+keywords: ["API", "routes", "bridge", "slicer", "preload", "IPC", "SDCP", "endpoints"]
+---
+
+All of these APIs are local to the PC. None is a public web API.
+
+## App server
+
+Routes live in `src/app/api/`. All return JSON, and errors are `{ "error": "<plain-language message>" }`. Most everyday changes are server actions in `actions.ts` files next to the pages.
+
+| Route | Who | Purpose |
+| --- | --- | --- |
+| `GET /api/health` | Anyone | Liveness and whether EasyPrint is configured |
+| `GET /api/setup/status`, `POST /api/setup/admin` | First run or administrator | Setup wizard state; create the first administrator |
+| `/api/auth/...` | – | Neon Auth proxy; sign-up is blocked once an administrator exists |
+| `GET /api/me` | Person or administrator | Current identity |
+| `POST /api/jobs`, `GET` and `POST /api/jobs/[id]` | Person or administrator | Create a job; read, start, pause, resume or cancel it |
+| `POST /api/models/upload`, `/api/models/check`, `/api/models/scene`, `/api/models/generate`, `GET /api/models/[id]/advice` | Person | Upload and check a mesh, save a scene, AI design, print helper advice |
+| `GET /api/files/[kind]/[hash]` | Person or administrator | Serve a stored model, preview or G-code |
+| `GET /api/printer/status`, `/live`, `/camera`, `/history`, `/files`; `POST /api/printer/control`, `/light` | Person (advanced controls per the rule) or administrator | Printer status, live updates, camera stream, advanced controls |
+| `GET /api/thingiverse` | Administrator, or person when allowed | Search and thing details |
+| `/api/admin/models`, `/settings`, `/printer`, `/printer/discover`, `/slicer/test`, `/local-ai`, `/ticket` | Administrator | Library import, settings, printer setup and discovery, slicer self-test, built-in designer download, IPC tickets |
+
+## Printer bridge
+
+Listens on `127.0.0.1:4317` and requires the Bearer service token. Writes also need a capability token.
+
+| Route | Capability | Purpose |
+| --- | --- | --- |
+| `GET /health`, `GET /status` | – | Liveness; full printer snapshot, upload progress and busy flag |
+| `GET /discover` | – | UDP `M99999` broadcast to port 3000 for 3 seconds |
+| `POST /configure` | – | Set the printer's IPv4 address |
+| `POST /upload` | `upload` | Upload G-code (file name in `x-easyprint-filename`, up to 512 MB) |
+| `POST /print/start`, `/print/pause`, `/print/resume`, `/print/stop` | `start`, `pause`, `resume`, `stop` | SDCP Cmd 128, 129, 131, 130 |
+| `POST /control` | `control` | Advanced controls: temperatures, movement, homing, fans, light, speed |
+| `GET /files`, `POST /files/delete` | `delete` for delete | Files on the printer |
+| `GET /history` | – | The printer's task history |
+| `GET /camera` | `camera` | Turn the camera on (Cmd 386) and stream MJPEG from port 3031; one viewer at a time |
+
+The bridge keeps one WebSocket to `ws://<printer>:3030/websocket`, sends a ping every 10 seconds, polls status every 15 seconds and reconnects with back-off, because the printer allows few clients.
+
+## Slicing service
+
+Listens on `127.0.0.1:4318` and requires the Bearer service token.
+
+| Route | Purpose |
+| --- | --- |
+| `GET /health` | Liveness |
+| `GET /profiles` | The profile manifest |
+| `POST /slice` | Slice a model |
+| `DELETE /slice/[jobId]` | Cancel a slice |
+| `DELETE /work/[jobId]` | Clean up a job's working files |
+
+## Preload API
+
+`electron/preload.ts` exposes `window.easyprint` to the page:
+
+| Function | Notes |
+| --- | --- |
+| `app.info()`, `app.notify()` | Version and platform; desktop notifications |
+| `setup.connectionStatus()`, `setup.saveConnection()` | Saving needs an administrator ticket once EasyPrint is configured |
+| `setup.saveOptionalKeys()` | Needs a ticket |
+| `updates.status()`, `updates.check()`, `updates.download()`, `updates.install()`, `updates.setAuto()` | Changes need a ticket |
