@@ -1,0 +1,71 @@
+---
+title: "Print pipeline"
+description: "How a print moves from a model to a finished object: job states, slicing, starting and monitoring."
+icon: "workflow"
+keywords: ["jobs", "states", "slicing", "OrcaSlicer", "SDCP", "upload", "approval", "AI designer"]
+---
+
+## Job states
+
+Each print attempt is a row in `print_jobs` with a `status`:
+
+```text
+preparing --> awaiting_approval --approve--> ready --PRINT--> sending --> starting --> printing <--> paused
+    |               | reject                   ^                 |           |            |
+    v               v                          +--start failed---+-----------+            v
+  failed        cancelled                                                  completed / cancelled / failed
+```
+
+- Open states are `preparing`, `awaiting_approval`, `ready`, `sending`, `starting`, `printing` and `paused`. A person may have **one open job**.
+- The printer may have **one job** in `sending`, `starting`, `printing` or `paused`.
+- Every transition is a conditional `UPDATE ... WHERE status = <expected>`, so concurrent clicks cannot double-start or double-cancel.
+
+## Creating a job
+
+<Steps>
+  <Step title="Check the model and choices">
+    The person must be allowed to print the model (a published library model or their own; administrators can print any). The filament must be available, of an allowed material and allowed for the model; the quality must be allowed; the size must fit the largest allowed print, comparing the two largest footprint sides with the bed and the height with Z.
+  </Step>
+  <Step title="One print at a time">
+    Reject if the person already has an open job.
+  </Step>
+  <Step title="Decide print helpers">
+    Resolve supports and brim from the rules (`ask`, `auto` or `never`) and an analysis of the mesh.
+  </Step>
+  <Step title="Slice">
+    Insert the job as `preparing`, record `job.created` in the activity log, and slice in the background.
+  </Step>
+  <Step title="Decide approval">
+    The person's own setting wins, otherwise the global rule. Published library models are pre-approved when that rule is on. Prints longer than the time limit need approval. The job becomes `awaiting_approval` or `ready` with the estimated time, grams and layers.
+  </Step>
+</Steps>
+
+## Slicing
+
+The slicing service (`POST /slice`) copies the model to a neutral file name so no personal paths reach the G-code, merges the bundled Centauri Carbon presets with administrator overrides and helper settings, and runs `orca-slicer.exe` headless. One slice runs at a time with a 15-minute timeout and can be cancelled. The output is validated (header present, `printer_model` is the Centauri Carbon, height within the limit, more than zero layers) and stored by SHA-256.
+
+## Starting a print
+
+EasyPrint checks the job is `ready`, the bed-clear box was ticked if required, G-code exists, the printer is connected and not busy, and no other job is on the printer. It then:
+
+1. claims the job (`ready` to `sending`),
+2. mints an **upload** capability bound to the G-code SHA-256 and uploads in 1 MB parts (the printer checks the MD5),
+3. mints a **start** capability bound to the file name and sends SDCP Cmd 128 with `PrintPlatformType` (1 for the Cool Plate, otherwise 0), `Calibration_switch` (bed levelling) and `Tlp_Switch` (timelapse),
+4. marks the job `printing`.
+
+Any failure returns the job to `ready` with a plain-language message.
+
+## During and after the print
+
+- Pause, resume and stop send SDCP Cmd 129, 131 and 130. A pending intent is kept until the printer confirms the new state.
+- The job monitor polls every 3 seconds and records progress (`PrintInfo.Progress`, or the layer ratio), the current layer, the time left (`TotalTicks` minus `CurrentTicks`, in seconds) and how the print ended. After 60 seconds without contact it marks the job `printer_unreachable` so the person is told to check the printer.
+
+## Describe what I want
+
+Designers are tried in order:
+
+1. **An exact ready-made template** (`shared/templates.ts`, about 20 designs) when it covers the whole description. Free, offline, not counted.
+2. **The built-in designer** (Qwen3.5 4B standard or 9B large, run with node-llama-cpp) or **Claude** (when `ANTHROPIC_API_KEY` is set). The administrator's `preferLocal` setting decides which comes first. These count against the daily limit; administrators are exempt.
+3. **The nearest template**, with a note saying what was left out.
+
+The output is always a **scene** of simple shapes (box, sphere, cylinder, cone, torus, text) that `scene-build.ts` turns into a watertight mesh with manifold-3d. AI output is forced to the design JSON schema: zod structured output for Claude, a grammar for llama.cpp.

@@ -47,12 +47,17 @@
             "group": "How it works",
             "pages": [
               "developers/overview",
-              "developers/architecture"
+              "developers/architecture",
+              "developers/print-pipeline",
+              "developers/data-model",
+              "developers/security"
             ]
           },
           {
             "group": "Reference",
-            "pages": []
+            "pages": [
+              "developers/configuration"
+            ]
           },
           {
             "group": "Development",

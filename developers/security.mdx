@@ -1,0 +1,30 @@
+---
+title: "Security model"
+description: "How EasyPrint protects the renderer, local services, the printer, administrator rights and secrets."
+icon: "lock"
+keywords: ["security", "capability tokens", "service token", "safeStorage", "DPAPI", "IPC", "DNS rebinding", "sandbox"]
+---
+
+| Concern | Control | Where |
+| --- | --- | --- |
+| Renderer compromise | `contextIsolation`, `sandbox`, no `nodeIntegration`, `webSecurity`; no webviews; navigation pinned to the app origin; external `https://` links open in the system browser | `electron/main.ts` |
+| Network access from the renderer | Every request except the app origin, `data:` and `blob:` is cancelled | `electron/main.ts` |
+| DNS rebinding and other local browsers | The app server rejects any `Host` other than `127.0.0.1:3210` or `localhost:3210`; all services bind to loopback | `src/proxy.ts` |
+| Other programs calling local services | A per-launch 32-byte **service token** (Bearer) is required by the bridge and slicer | `electron/services.ts` |
+| Printer writes | **Capability tokens**: HMAC-signed, 60 seconds, single use, bound to the operation and the file (SHA-256 for upload, file name for start). Minted only after the app server's own permission check | `shared/capability.ts` |
+| Administrator rights | `neon_auth.user.role` re-read on every request; banned users are never administrators | `src/lib/server/auth.ts` |
+| Two people racing through setup | The first administrator is promoted with a conditional update that only succeeds while no administrator exists | `promoteFirstAdmin` |
+| Self sign-up | Blocked once an administrator exists; an auth account with no profile or admin role grants nothing | `src/app/api/auth/` |
+| Administrator-only IPC | Changing the connection or keys and installing updates need a one-use **ticket** minted by `/api/admin/ticket` for a signed-in administrator | `electron/ipc.ts` |
+| IPC input | Sender origin check and zod validation on every handler | `electron/ipc.ts` |
+| Secrets at rest | Electron `safeStorage` (Windows DPAPI, per Windows user), atomic write, allow-listed keys only | `electron/secrets.ts` |
+| Secrets in logs | Redacts database passwords, Anthropic keys, Bearer tokens and `secret`, `token`, `password` or `api_key` values | `electron/logger.ts` |
+| Built-in database login | The build refuses the owner login; the built-in `easyprint_app` login cannot change the schema | `scripts/build-electron.mjs` |
+| Personal data in G-code | Models are copied to neutral file names before slicing | `slicer/service.ts` |
+| Slicer configuration | Overrides are simple key/values only, never start or end G-code or printer identity; output is validated | `slicer/service.ts` |
+| Advanced controls | Limited ranges (nozzle up to 300 °C, bed up to 110 °C, fixed jog steps and speed modes) and checked file paths | `shared/control.ts` |
+
+## Known gaps
+
+- The installer is not code-signed, so Windows SmartScreen warns.
+- The built-in Thingiverse token and shared database login can be extracted from the program. Use least-privilege credentials and rotate them if they are abused.
