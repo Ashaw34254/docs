@@ -23,12 +23,20 @@
           {
             "group": "Using EasyPrint",
             "pages": [
-              "guides/print-a-model"
+              "guides/print-a-model",
+              "guides/create-a-model",
+              "guides/settings",
+              "guides/troubleshooting"
             ]
           },
           {
             "group": "Administration",
-            "pages": []
+            "pages": [
+              "admin/overview",
+              "admin/safety-rules",
+              "admin/ai-designs",
+              "admin/maintenance"
+            ]
           }
         ]
       },
