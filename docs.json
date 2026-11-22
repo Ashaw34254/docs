@@ -23,11 +23,29 @@
           {
             "group": "Using EasyPrint",
             "pages": []
+          },
+          {
+            "group": "Administration",
+            "pages": []
           }
         ]
       },
       {
-        "tab": "Developers"
+        "tab": "Developers",
+        "groups": [
+          {
+            "group": "How it works",
+            "pages": []
+          },
+          {
+            "group": "Reference",
+            "pages": []
+          },
+          {
+            "group": "Development",
+            "pages": []
+          }
+        ]
       }
     ]
   },
