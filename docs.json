@@ -22,7 +22,9 @@
           },
           {
             "group": "Using EasyPrint",
-            "pages": []
+            "pages": [
+              "guides/print-a-model"
+            ]
           },
           {
             "group": "Administration",
