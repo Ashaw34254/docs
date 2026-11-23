@@ -1,0 +1,65 @@
+---
+title: "Licensing"
+description: "EasyPrint 3D's licence, and the third-party software and models it includes or uses."
+icon: "scale"
+keywords: ["licence", "license", "copyright", "AGPL", "OrcaSlicer", "Apache", "MIT", "third party"]
+---
+
+## EasyPrint 3D
+
+EasyPrint 3D is proprietary software.
+
+**Copyright © 2026 North Byte Tech. All rights reserved.**
+
+You may install and use EasyPrint 3D only under a licence from North Byte Tech. You may not copy, modify, redistribute, sell or reverse-engineer it except where the law allows or North Byte Tech agrees in writing. For licensing, contact [Abailey@northbytetech.com](mailto:Abailey@northbytetech.com).
+
+These terms cover EasyPrint 3D itself. The third-party software listed below keeps its own licence.
+
+## Software bundled with EasyPrint
+
+### OrcaSlicer
+
+EasyPrint includes **OrcaSlicer 2.5.1**, which prepares models for the printer. It is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0).
+
+- OrcaSlicer is shipped **unmodified**, as a separate program that EasyPrint runs. It is not linked into EasyPrint.
+- Its licence text is installed with it, in the EasyPrint program folder under `resources\slicer\engine\LICENSE.txt`.
+- Its source code is available at [github.com/OrcaSlicer/OrcaSlicer/tree/v2.5.1](https://github.com/OrcaSlicer/OrcaSlicer/tree/v2.5.1).
+
+The Elegoo Centauri Carbon print settings that EasyPrint uses come from OrcaSlicer's Elegoo profiles. They are included under the same AGPL-3.0 licence, with no values changed.
+
+### Fonts
+
+The font used for words in models is **Droid Sans**, copyright The Android Open Source Project, licensed under the **Apache License 2.0**. Its notice is installed in the EasyPrint program folder under `resources\licences`.
+
+### Open-source libraries
+
+EasyPrint is built with open-source libraries, including:
+
+| Library | Licence |
+| --- | --- |
+| Electron | MIT |
+| Next.js, React | MIT |
+| three.js, React Three Fiber, drei | MIT |
+| manifold-3d | Apache-2.0 |
+| fflate | MIT |
+| Drizzle ORM | Apache-2.0 |
+| Neon serverless driver | MIT |
+| Neon Auth | Apache-2.0 |
+| Anthropic SDK | Apache-2.0 |
+| node-llama-cpp | MIT |
+| electron-updater | MIT |
+| ws, zod | MIT |
+
+Each library's own licence notice is included with the installed program.
+
+## Downloaded on request
+
+The **built-in designer** for *Describe what I want* is not included in the installer. When an administrator downloads it, EasyPrint fetches a **Qwen3.5** model (Standard 4B or Large 9B), licensed under the **Apache License 2.0**.
+
+## Online services
+
+EasyPrint connects to Neon (database and accounts), and optionally to Anthropic (Claude designs) and Thingiverse (model search). Each service has its own terms, which apply to your use of it. If you add an Anthropic API key, your use of Claude is billed and governed by Anthropic.
+
+## Models from Thingiverse
+
+Models imported from Thingiverse belong to their creators and keep their own licence, often a Creative Commons licence. EasyPrint records each model's licence and author when it is imported. Check the licence before printing a model for sale or sharing it, as some licences do not allow commercial use.
