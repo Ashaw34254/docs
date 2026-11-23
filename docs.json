@@ -24,8 +24,21 @@
             "group": "Using EasyPrint",
             "pages": [
               "guides/print-a-model",
+              "guides/after-printing",
               "guides/create-a-model",
+              "guides/first-project-keychain",
+              "guides/describe-tips",
               "guides/settings",
+              "guides/keyboard-and-screen-readers",
+              "guides/sounds-and-messages"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "guides/easy-read",
+              "guides/faq",
+              "guides/glossary",
               "guides/troubleshooting"
             ]
           },
