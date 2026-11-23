@@ -11,6 +11,15 @@ keywords: ["update", "uninstall", "repair", "backup", "data", "logs", "troublesh
 
 If it says *No update source has been set up for this build*, ask whoever supplies EasyPrint for a new installer and run it. It updates in place.
 
+## Turning the printer on and off
+
+Advise people to switch the printer off when it is not in use: an unattended printer is a small fire risk, and idle power use and fan wear add up. Leaving it on gains nothing; it is ready about a minute after power-on.
+
+- EasyPrint copes with the printer being off. It shows *not connected*, refuses to start a print with a plain message, and reconnects by itself once the printer is back on. A fixed IP address for the printer in your router makes reconnection reliable.
+- Switch off only once the nozzle is below about 50 °C (shown on the printer's screen), and never during a print or while heating.
+- Closing EasyPrint or letting the PC sleep while a print is *being prepared* or *sent* fails that print. Once printing has started, closing EasyPrint is fine; it checks the printer's history when it reopens. Consider turning off sleep on this PC, or setting a long sleep timer.
+- When the printer will be idle for days, store spools sealed with desiccant. PLA and especially PETG absorb moisture, which causes stringing and weak prints.
+
 ## Repair and uninstall
 
 - **Repair or reinstall**: run the installer again. Data is kept.
