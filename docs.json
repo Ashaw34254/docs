@@ -39,7 +39,9 @@
               "guides/easy-read",
               "guides/faq",
               "guides/glossary",
-              "guides/troubleshooting"
+              "guides/troubleshooting",
+              "contact",
+              "licensing"
             ]
           },
           {
@@ -86,7 +88,12 @@
     ]
   },
   "navbar": {
-    "links": []
+    "links": [
+      {
+        "label": "Contact",
+        "href": "mailto:Abailey@northbytetech.com"
+      }
+    ]
   },
   "contextual": {
     "options": [
@@ -97,10 +104,20 @@
     ]
   },
   "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    "links": [
+      {
+        "header": "North Byte Tech",
+        "items": [
+          {
+            "label": "Contact",
+            "href": "mailto:Abailey@northbytetech.com"
+          },
+          {
+            "label": "Licensing",
+            "href": "/licensing"
+          }
+        ]
+      }
+    ]
   }
 }
